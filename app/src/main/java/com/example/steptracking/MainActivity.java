@@ -17,9 +17,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView debugInfoText;
     private TextView sensorDataText;
     private int stepCount = 0;
-    private static final float STEP_THRESHOLD = 10f;
-    private float lastX, lastY, lastZ;
-    private long lastTime;
+    private static final float STEP_THRESHOLD = 2.0f;
+    private static final int MIN_TIME_BETWEEN_STEPS_MS = 300;
+    private float[] gravity = new float[3];
+    private long lastStepTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,37 +77,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        debugInfoText.setText("Sensor event triggered.");
-
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            final float alpha = 0.8f;
+
+            // Isolate the force of gravity with the low-pass filter.
+            gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
+            gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
+            gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
+
+            // Remove the gravity contribution with the high-pass filter.
+            float linear_acceleration_x = event.values[0] - gravity[0];
+            float linear_acceleration_y = event.values[1] - gravity[1];
+            float linear_acceleration_z = event.values[2] - gravity[2];
+
+            // Calculate the magnitude of the acceleration vector.
+            float magnitude = (float) Math.sqrt(linear_acceleration_x * linear_acceleration_x +
+                    linear_acceleration_y * linear_acceleration_y +
+                    linear_acceleration_z * linear_acceleration_z);
+
+            sensorDataText.setText("X: " + linear_acceleration_x + " Y: " + linear_acceleration_y + " Z: " + linear_acceleration_z);
+
             long currentTime = System.currentTimeMillis();
-            long timeDifference = currentTime - lastTime;
-
-            sensorDataText.setText("X: " + event.values[0] + " Y: " + event.values[1] + " Z: " + event.values[2]);
-
-            if (timeDifference > 100) {
-                float x = event.values[0];
-                float y = event.values[1];
-                float z = event.values[2];
-
-                float deltaX = x - lastX;
-                float deltaY = y - lastY;
-                float deltaZ = z - lastZ;
-
-                float magnitude = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-
-                debugInfoText.append("\nMagnitude: " + magnitude);
-
-                if (magnitude > STEP_THRESHOLD) {
-                    stepCount++;
-                    stepCountText.setText("Steps: " + stepCount);
-                }
-
-                lastX = x;
-                lastY = y;
-                lastZ = z;
-                lastTime = currentTime;
+            if (magnitude > STEP_THRESHOLD && (currentTime - lastStepTime) > MIN_TIME_BETWEEN_STEPS_MS) {
+                stepCount++;
+                stepCountText.setText("Steps: " + stepCount);
+                lastStepTime = currentTime;
             }
+
+            debugInfoText.setText("Magnitude: " + magnitude + "\nLast step time: " + lastStepTime);
         }
     }
 
