@@ -5,32 +5,64 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/startButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Recording"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
+
     <TextView
         android:id="@+id/stepCountText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Steps: 0"
-        android:textSize="30sp"
+        android:layout_below="@+id/startButton"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp" />
+        android:layout_marginTop="16dp" />
 
     <TextView
         android:id="@+id/debugInfoText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Debug Info"
-        android:textSize="16sp"
-        android:layout_below="@id/stepCountText"
-        android:layout_marginTop="20dp"
-        android:layout_centerHorizontal="true" />
+        android:layout_below="@+id/stepCountText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
 
     <TextView
         android:id="@+id/sensorDataText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Sensor Data"
-        android:textSize="16sp"
-        android:layout_below="@id/debugInfoText"
-        android:layout_marginTop="20dp"
-        android:layout_centerHorizontal="true" />
+        android:layout_below="@+id/debugInfoText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
+
+    <TableLayout
+        android:id="@+id/stepTable"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/sensorDataText"
+        android:layout_marginTop="16dp"
+        android:padding="16dp"
+        android:stretchColumns="1">
+
+        <TableRow>
+            <TextView android:text="Interval" />
+            <TextView android:text="Steps" />
+        </TableRow>
+    </TableLayout>
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/lineChart"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_below="@+id/stepTable"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp" />
+
 </RelativeLayout>
