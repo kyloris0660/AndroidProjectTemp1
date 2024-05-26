@@ -13,6 +13,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -31,6 +32,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView stepCountText;
     private TextView debugInfoText;
     private TextView sensorDataText;
+    private TextView accelXText;
+    private TextView accelYText;
+    private TextView accelZText;
     private Button startButton;
     private TableLayout stepTable;
     private LineChart lineChart;
@@ -55,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         stepCountText = findViewById(R.id.stepCountText);
         debugInfoText = findViewById(R.id.debugInfoText);
         sensorDataText = findViewById(R.id.sensorDataText);
+        accelXText = findViewById(R.id.accelXText);
+        accelYText = findViewById(R.id.accelYText);
+        accelZText = findViewById(R.id.accelZText);
         startButton = findViewById(R.id.startButton);
         stepTable = findViewById(R.id.stepTable);
         lineChart = findViewById(R.id.lineChart);
@@ -90,7 +97,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 intervalCount = 0;
                 stepsInInterval = 0;
                 entries.clear();
-                lineData.clearValues();
                 stepTable.removeViews(1, stepTable.getChildCount() - 1);
                 startButton.setText("Stop Recording");
                 handler.post(recordingRunnable);
@@ -105,6 +111,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void setupChart() {
         dataSet = new LineDataSet(entries, "Steps per Interval");
         dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        dataSet.setDrawValues(false);
+        dataSet.setDrawCircles(true);
+        dataSet.setColor(ContextCompat.getColor(this, R.color.colorPrimary));
+        dataSet.setCircleColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
+
         lineData = new LineData(dataSet);
         lineChart.setData(lineData);
 
@@ -127,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 intervalCount++;
                 updateTableAndChart();
                 stepsInInterval = 0;
-                handler.postDelayed(this, 10000); // 每10秒执行一次
+                handler.postDelayed(this, 5000); // 每5秒执行一次
             }
         }
     };
@@ -155,6 +166,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             final float alpha = 0.8f;
+
             gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
             gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
             gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
@@ -163,22 +175,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             float y = event.values[1] - gravity[1];
             float z = event.values[2] - gravity[2];
 
-            float acceleration = (float) Math.sqrt(x * x + y * y + z * z);
-            long currentTime = System.currentTimeMillis();
+            accelXText.setText("Accel X: " + x);
+            accelYText.setText("Accel Y: " + y);
+            accelZText.setText("Accel Z: " + z);
 
-            if (acceleration > STEP_THRESHOLD && (currentTime - lastStepTime) > MIN_TIME_BETWEEN_STEPS_MS) {
-                lastStepTime = currentTime;
+            sensorDataText.setText("Sensor Data: X=" + x + " Y=" + y + " Z=" + z);
+
+            if (isStepDetected(x, y, z)) {
                 stepCount++;
                 stepsInInterval++;
-                sensorDataText.setText("Acceleration: " + acceleration);
                 stepCountText.setText("Steps: " + stepCount);
             }
         }
     }
 
+    private boolean isStepDetected(float x, float y, float z) {
+        float magnitude = (float) Math.sqrt(x * x + y * y + z * z);
+        long currentTime = System.currentTimeMillis();
+
+        if (magnitude > STEP_THRESHOLD) {
+            if (currentTime - lastStepTime > MIN_TIME_BETWEEN_STEPS_MS) {
+                lastStepTime = currentTime;
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // Not used
+        // No action needed
     }
 
     @Override
