@@ -10,18 +10,83 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Steps: 0"
-        android:textSize="18sp"
+        android:textSize="24sp"
         android:layout_marginTop="16dp"
         android:layout_centerHorizontal="true"/>
+
+    <LinearLayout
+        android:id="@+id/goalLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/stepCountText"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <EditText
+            android:id="@+id/goalInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Enter step goal"
+            android:inputType="number"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/setGoalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Goal" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/goalLayout"
+        android:max="100"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_centerHorizontal="true"
+        style="?android:attr/progressBarStyleHorizontal"/>
+
+    <TextView
+        android:id="@+id/goalText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/progressBar"
+        android:text="Goal: 0 steps"
+        android:textSize="18sp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/startButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Recording"
+        android:layout_below="@id/goalText"
+        android:layout_marginTop="16dp"
+        android:layout_centerHorizontal="true"/>
+
+    <CheckBox
+        android:id="@+id/debugCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/startButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="Show Debug Info" />
 
     <TextView
         android:id="@+id/debugInfoText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Debug Info"
-        android:layout_below="@id/stepCountText"
+        android:layout_below="@id/debugCheckBox"
         android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/sensorDataText"
@@ -30,7 +95,8 @@
         android:text="Sensor Data"
         android:layout_below="@id/debugInfoText"
         android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/accelXText"
@@ -39,7 +105,8 @@
         android:text="Accel X: 0.0"
         android:layout_below="@id/sensorDataText"
         android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/accelYText"
@@ -48,7 +115,8 @@
         android:text="Accel Y: 0.0"
         android:layout_below="@id/accelXText"
         android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/accelZText"
@@ -57,22 +125,14 @@
         android:text="Accel Z: 0.0"
         android:layout_below="@id/accelYText"
         android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"/>
-
-    <Button
-        android:id="@+id/startButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start Recording"
-        android:layout_below="@id/accelZText"
-        android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:visibility="gone" />
 
     <TableLayout
         android:id="@+id/stepTable"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/startButton"
+        android:layout_below="@id/accelZText"
         android:layout_marginTop="16dp"
         android:stretchColumns="1">
 

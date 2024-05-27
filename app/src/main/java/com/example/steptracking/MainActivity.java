@@ -7,7 +7,12 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -36,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView accelYText;
     private TextView accelZText;
     private Button startButton;
+    private CheckBox debugCheckBox;
     private TableLayout stepTable;
     private LineChart lineChart;
     private int stepCount = 0;
@@ -50,7 +56,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private LineData lineData;
     private int intervalCount = 0;
     private int stepsInInterval = 0;
-    private float maxYValue = 10f; // Initial max value for Y-axis
+    private float maxYValue = 10f; // y轴最大值
+
+    private EditText goalInput;
+    private Button setGoalButton;
+    private ProgressBar progressBar;
+    private TextView goalText;
+    private int stepGoal = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +76,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         accelYText = findViewById(R.id.accelYText);
         accelZText = findViewById(R.id.accelZText);
         startButton = findViewById(R.id.startButton);
+        debugCheckBox = findViewById(R.id.debugCheckBox);
         stepTable = findViewById(R.id.stepTable);
         lineChart = findViewById(R.id.lineChart);
+
+        goalInput = findViewById(R.id.goalInput);
+        setGoalButton = findViewById(R.id.setGoalButton);
+        progressBar = findViewById(R.id.progressBar);
+        goalText = findViewById(R.id.goalText);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -79,12 +97,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         registerStepCounter();
         setupChart();
         setupStartButton();
+        setupGoalButton();
+        setupDebugCheckBox();
+    }
+
+    private void setupGoalButton() {
+        setGoalButton.setOnClickListener(v -> {
+            String goalTextStr = goalInput.getText().toString();
+            if (!goalTextStr.isEmpty()) {
+                stepGoal = Integer.parseInt(goalTextStr);
+                goalText.setText("Goal: " + stepGoal + " steps");
+                progressBar.setProgress(0);
+                progressBar.setMax(stepGoal);
+            }
+        });
+    }
+
+    private void setupDebugCheckBox() {
+        debugCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            int visibility = isChecked ? View.VISIBLE : View.GONE;
+            debugInfoText.setVisibility(visibility);
+            sensorDataText.setVisibility(visibility);
+            accelXText.setVisibility(visibility);
+            accelYText.setVisibility(visibility);
+            accelZText.setVisibility(visibility);
+        });
     }
 
     private void registerStepCounter() {
         if (accelerometerSensor != null) {
-            boolean registered = sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
-            debugInfoText.setText("Accelerometer registered: " + registered);
+            debugInfoText.setText("Accelerometer registered.");
         } else {
             debugInfoText.setText("Failed to register accelerometer.");
         }
@@ -94,7 +136,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         startButton.setOnClickListener(v -> {
             if (!isRecording) {
                 isRecording = true;
-                stepCount = 0;
                 intervalCount = 0;
                 stepsInInterval = 0;
                 entries.clear();
@@ -150,10 +191,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         TableRow row = new TableRow(this);
         TextView intervalText = new TextView(this);
         intervalText.setText(String.valueOf(intervalCount));
+        intervalText.setGravity(Gravity.CENTER);
+        intervalText.setTextSize(16); // 调整字体大小
         row.addView(intervalText);
 
         TextView stepsText = new TextView(this);
         stepsText.setText(String.valueOf(stepsInInterval));
+        stepsText.setGravity(Gravity.CENTER);
+        stepsText.setTextSize(16); // 调整字体大小
         row.addView(stepsText);
 
         stepTable.addView(row);
@@ -174,9 +219,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 maxInDataSet = entry.getY();
             }
         }
-        // Adjust the maximum only if the current maximum is exceeded
+        // 如果顶到表格外面就重新绘制y轴
         if (maxInDataSet > maxYValue) {
-            maxYValue = maxInDataSet + 5; // Add some padding
+            maxYValue = maxInDataSet + 5;
             YAxis leftAxis = lineChart.getAxisLeft();
             leftAxis.setAxisMaximum(maxYValue);
         }
@@ -205,6 +250,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 stepCount++;
                 stepsInInterval++;
                 stepCountText.setText("Steps: " + stepCount);
+
+                if (stepGoal > 0) {
+                    int progress = Math.min(stepCount, stepGoal);
+                    progressBar.setProgress(progress);
+                }
             }
         }
     }
