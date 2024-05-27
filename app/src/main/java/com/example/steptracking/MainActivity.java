@@ -21,11 +21,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -126,11 +128,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void registerStepCounter() {
         if (accelerometerSensor != null) {
-            debugInfoText.setText("Accelerometer registered.");
+            boolean registered = sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            debugInfoText.setText("Accelerometer registered: " + registered);
         } else {
             debugInfoText.setText("Failed to register accelerometer.");
         }
     }
+
 
     private void setupStartButton() {
         startButton.setOnClickListener(v -> {
@@ -163,15 +167,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f); // only intervals of 1
+        xAxis.setLabelCount(entries.size(), true);
+        xAxis.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getAxisLabel(float value, AxisBase axis) {
+                return "Interval";
+            }
+        });
 
         YAxis leftAxis = lineChart.getAxisLeft();
         leftAxis.setDrawGridLines(false);
         leftAxis.setAxisMinimum(0f); // Always start from 0
         leftAxis.setAxisMaximum(maxYValue); // Set initial max value
+        leftAxis.setLabelCount(6, true);
+        leftAxis.setGranularity(1f); // interval of 1
 
         YAxis rightAxis = lineChart.getAxisRight();
         rightAxis.setEnabled(false);
 
+        lineChart.getDescription().setText("Steps per Interval");
         lineChart.invalidate();
     }
 
@@ -211,6 +226,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         adjustYAxis();
         lineChart.invalidate();
     }
+
 
     private void adjustYAxis() {
         float maxInDataSet = 0f;
