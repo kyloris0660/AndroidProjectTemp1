@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private LineData lineData;
     private int intervalCount = 0;
     private int stepsInInterval = 0;
+    private float maxYValue = 10f; // Initial max value for Y-axis
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +125,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         YAxis leftAxis = lineChart.getAxisLeft();
         leftAxis.setDrawGridLines(false);
+        leftAxis.setAxisMinimum(0f); // Always start from 0
+        leftAxis.setAxisMaximum(maxYValue); // Set initial max value
 
         YAxis rightAxis = lineChart.getAxisRight();
         rightAxis.setEnabled(false);
@@ -159,7 +162,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         dataSet.notifyDataSetChanged();
         lineData.notifyDataChanged();
         lineChart.notifyDataSetChanged();
+
+        adjustYAxis();
         lineChart.invalidate();
+    }
+
+    private void adjustYAxis() {
+        float maxInDataSet = 0f;
+        for (Entry entry : entries) {
+            if (entry.getY() > maxInDataSet) {
+                maxInDataSet = entry.getY();
+            }
+        }
+        // Adjust the maximum only if the current maximum is exceeded
+        if (maxInDataSet > maxYValue) {
+            maxYValue = maxInDataSet + 5; // Add some padding
+            YAxis leftAxis = lineChart.getAxisLeft();
+            leftAxis.setAxisMaximum(maxYValue);
+        }
     }
 
     @Override
