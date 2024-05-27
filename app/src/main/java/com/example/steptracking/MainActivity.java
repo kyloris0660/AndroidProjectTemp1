@@ -1,6 +1,7 @@
 package com.example.steptracking;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -58,13 +59,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private LineData lineData;
     private int intervalCount = 0;
     private int stepsInInterval = 0;
-    private float maxYValue = 10f; // y轴最大值
+    private float maxYValue = 10f; // Initial max value for Y-axis
 
+    // New fields for step goal and progress tracking
     private EditText goalInput;
     private Button setGoalButton;
     private ProgressBar progressBar;
     private TextView goalText;
     private int stepGoal = 0;
+
+    // Fields for inactivity detection
+    private Handler inactivityHandler = new Handler();
+    private Runnable inactivityRunnable;
+    private static final long INACTIVITY_INTERVAL = 5000; // 30 seconds for example
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         stepTable = findViewById(R.id.stepTable);
         lineChart = findViewById(R.id.lineChart);
 
+        // Initialize new views
         goalInput = findViewById(R.id.goalInput);
         setGoalButton = findViewById(R.id.setGoalButton);
         progressBar = findViewById(R.id.progressBar);
@@ -101,7 +109,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setupStartButton();
         setupGoalButton();
         setupDebugCheckBox();
+
+        // Initialize inactivity runnable
+        inactivityRunnable = new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.rootLayout).setBackgroundColor(Color.RED);
+            }
+        };
     }
+
 
     private void setupGoalButton() {
         setGoalButton.setOnClickListener(v -> {
@@ -134,7 +151,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             debugInfoText.setText("Failed to register accelerometer.");
         }
     }
-
 
     private void setupStartButton() {
         startButton.setOnClickListener(v -> {
@@ -227,7 +243,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         lineChart.invalidate();
     }
 
-
     private void adjustYAxis() {
         float maxInDataSet = 0f;
         for (Entry entry : entries) {
@@ -235,9 +250,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 maxInDataSet = entry.getY();
             }
         }
-        // 如果顶到表格外面就重新绘制y轴
+        // Adjust the maximum only if the current maximum is exceeded
         if (maxInDataSet > maxYValue) {
-            maxYValue = maxInDataSet + 5;
+            maxYValue = maxInDataSet + 5; // Add some padding
             YAxis leftAxis = lineChart.getAxisLeft();
             leftAxis.setAxisMaximum(maxYValue);
         }
@@ -271,6 +286,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     int progress = Math.min(stepCount, stepGoal);
                     progressBar.setProgress(progress);
                 }
+
+                findViewById(R.id.rootLayout).setBackgroundColor(Color.WHITE);
+                resetInactivityTimer();
             }
         }
     }
@@ -288,6 +306,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return false;
     }
 
+    private void resetInactivityTimer() {
+        inactivityHandler.removeCallbacks(inactivityRunnable);
+        inactivityHandler.postDelayed(inactivityRunnable, INACTIVITY_INTERVAL);
+    }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         // No action needed
@@ -297,11 +320,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onResume() {
         super.onResume();
         registerStepCounter();
+        resetInactivityTimer(); // Start inactivity timer
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         sensorManager.unregisterListener(this);
+        inactivityHandler.removeCallbacks(inactivityRunnable); // Stop inactivity timer
     }
 }
